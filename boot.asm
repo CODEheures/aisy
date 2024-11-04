@@ -10,9 +10,19 @@ Start:
     call PrintMessage
     jmp End
 
+NotSupported:
 End:
     hlt    
     jmp End
+
+TestDiskExtension:
+    mov [DriveId], dl
+    mov ah, 0x41
+    mov bx, 0x55AA
+    int 0x13
+    jc NotSupported
+    cmp bx, 0xAA55
+    jne NotSupported
 
 PrintMessage:
     mov ah, 0x13
@@ -24,7 +34,8 @@ PrintMessage:
     xor dx, dx
     int 0x10
 
-Message: db 'Hello world!'
+DriveId:    db 0
+Message:    db 'Extension disk supported'
 MessageLen: equ $-Message
 
 ; 0 to 1be partitions entries
