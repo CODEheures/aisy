@@ -4,7 +4,9 @@ BITS 16
 start:
     mov si, message
     call print
-    jmp $
+.end:
+    hlt    
+    jmp .end
 
 print:
     mov bx, 0
