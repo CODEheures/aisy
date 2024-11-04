@@ -7,12 +7,7 @@ Start:
     mov es, ax
     mov ss, ax
     mov sp, 0x7C00
-    call PrintMessage
-    jmp End
-
-NotSupported:
-End:
-    hlt    
+    call TestDiskExtension
     jmp End
 
 TestDiskExtension:
@@ -23,8 +18,14 @@ TestDiskExtension:
     jc NotSupported
     cmp bx, 0xAA55
     jne NotSupported
+    ret
 
-PrintMessage:
+End:
+    hlt    
+    jmp End
+
+NotSupported:
+PrintError:
     mov ah, 0x13
     mov al, 1
     mov bh, 0
@@ -33,9 +34,10 @@ PrintMessage:
     mov bp, Message
     xor dx, dx
     int 0x10
+    jmp End
 
 DriveId:    db 0
-Message:    db 'Extension disk supported'
+Message:    db 'Boot error'
 MessageLen: equ $-Message
 
 ; 0 to 1be partitions entries
