@@ -8,7 +8,7 @@ Start:
     mov ss, ax
     mov sp, 0x7C00
     call TestDiskExtension
-    jmp End
+    call LoadLoader
 
 TestDiskExtension:
     mov [DriveId], dl
@@ -20,12 +20,25 @@ TestDiskExtension:
     jne NotSupported
     ret
 
-End:
-    hlt    
-    jmp End
+; Load 5 sectors on org 0x7E00
+LoadLoader:
+    mov si, Packet ; packet describe here: https://www.ctyme.com/intr/rb-0708.htm#Table272
+    mov byte[si], 0x10 ; size of packet (16bytes)
+    mov byte[si+1], 0 ; reserved 0
+    mov word[si+2], 5 ; number of sector to load
+    mov word[si+4], 0x7E00 ; Offset
+    mov word[si+6], 0 ; Segment => 0 * 16 + 0x7e00 = 0x7e00
+    mov dword[si+8], 1 ; Starting sector LBA
+    mov dword[si+0xC], 0 ; Starting sector HBA
+    mov dl, [DriveId]
+    mov ah, 0x42
+    int 0x13
+    jc ReadError
+    mov [DriveId], dl
+    jmp 0x7E00
 
 NotSupported:
-PrintError:
+ReadError:
     mov ah, 0x13
     mov al, 1
     mov bh, 0
@@ -36,6 +49,11 @@ PrintError:
     int 0x10
     jmp End
 
+End:
+    hlt    
+    jmp End
+
+Packet:     times 16 db 0
 DriveId:    db 0
 Message:    db 'Boot error'
 MessageLen: equ $-Message
