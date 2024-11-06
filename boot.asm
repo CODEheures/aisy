@@ -7,14 +7,25 @@ Start:
     mov es, ax
     mov ss, ax
     mov sp, 0x7C00
-    call PrintMessage
+    call TestDiskExtension
     jmp End
+
+TestDiskExtension:
+    mov [DriveId], dl
+    mov ah, 0x41
+    mov bx, 0x55AA
+    int 0x13
+    jc NotSupported
+    cmp bx, 0xAA55
+    jne NotSupported
+    ret
 
 End:
     hlt    
     jmp End
 
-PrintMessage:
+NotSupported:
+PrintError:
     mov ah, 0x13
     mov al, 1
     mov bh, 0
@@ -23,8 +34,10 @@ PrintMessage:
     mov bp, Message
     xor dx, dx
     int 0x10
+    jmp End
 
-Message: db 'Hello world!'
+DriveId:    db 0
+Message:    db 'Boot error'
 MessageLen: equ $-Message
 
 ; 0 to 1be partitions entries
