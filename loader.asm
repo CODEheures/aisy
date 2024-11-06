@@ -6,6 +6,7 @@ Start:
     call TestLongModeSupport
     call TestLong1GPageModeSupport
     call TestA20Enabled
+    call SetVideoMode
     call EndSuccess
 
 TestCpuidFeatureSupport:
@@ -45,10 +46,15 @@ TestA20Enabled:
     mov es, ax
     ret
 
+SetVideoMode:
+    mov ah, 0 ; setting video mode function
+    mov al, 3 ; setting video mode as text mode (0xb8000 memory start characters (80*25 chars))
+    int 0x10
+
 EndSuccess:
     mov cx, SuccessMessageLen
-    mov bp, SuccessMessage
-    call Message
+    mov si, SuccessMessage
+    call VideoModeMessage
     jmp End
 
 End:
@@ -87,6 +93,22 @@ Message:
 ErrorMessage:
     call Message
     jmp End
+
+VideoModeMessage:
+    mov ax, 0xb800 ; to prepare Oxb8000 addr (es:di 0xb800:0x0 = 0xb8000)
+    mov es, ax
+    xor di, di
+    call PrintTextVideoMode
+    ret
+
+PrintTextVideoMode:
+    mov al, [si] ; current char in al
+    mov [es:di], al ; al in 0xb800:0x0000 (=Oxb8000)
+    add di, 1 ; to set next byte in memory
+    mov byte[es:di], 0xa ; foreground green/background black after char
+    add di, 1 ; to set next byte
+    add si, 1 ; to read next char
+    loop PrintTextVideoMode ; loop decrement cx and loop if cx > 0
 
 Message1:    db 'Cpuid Feature is not supported'
 MessageLen1: equ $-Message1
