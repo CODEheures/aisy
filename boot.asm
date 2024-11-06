@@ -1,30 +1,31 @@
-ORG 0x7C00
-BITS 16
+[BITS 16]
+[ORG 0x7C00]
 
-start:
-    mov si, message
-    call print
-.end:
+Start:
+    xor ax,ax
+    mov ds, ax
+    mov es, ax
+    mov ss, ax
+    mov sp, 0x7C00
+    call PrintMessage
+    jmp End
+
+End:
     hlt    
-    jmp .end
+    jmp End
 
-print:
-    mov bx, 0
-.loop:
-    lodsb
-    cmp al, 0
-    je .done
-    call print_char
-    jmp .loop
-.done:
-    ret
-
-print_char:
-    mov ah, 0eh
+PrintMessage:
+    mov ah, 0x13
+    mov al, 1
+    mov bh, 0
+    mov bl, 0b1010 ; bios color https://en.wikipedia.org/wiki/BIOS_color_attributes
+    mov cx, MessageLen
+    mov bp, Message
+    xor dx, dx
     int 0x10
-    ret
 
-message: db 'Hello world!', 0
+Message: db 'Hello world!'
+MessageLen: equ $-Message
 
 ; 0 to 1be partitions entries
 times 0x1be-($ - $$) db 0
