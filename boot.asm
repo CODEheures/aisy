@@ -2,7 +2,7 @@
 [ORG 0]
 
 ; bios parameters block https://wiki.osdev.org/FAT#BPB_(BIOS_Parameter_Block)
-jc Start
+jmp Start
 nop
 times 33 db 0
 
