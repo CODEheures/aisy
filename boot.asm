@@ -1,12 +1,23 @@
 [BITS 16]
-[ORG 0x7C00]
+[ORG 0]
+
+; bios parameters block https://wiki.osdev.org/FAT#BPB_(BIOS_Parameter_Block)
+jc Start
+nop
+times 33 db 0
 
 Start:
-    xor ax,ax
+    jmp 0x7C0:Init
+
+Init:
+    cli
+    mov ax, 0x7c0
     mov ds, ax
     mov es, ax
+    xor ax, ax
     mov ss, ax
     mov sp, 0x7C00
+    sti
     call TestDiskExtension
     call LoadLoader
 
@@ -26,8 +37,8 @@ LoadLoader:
     mov byte[si], 0x10 ; size of packet (16bytes)
     mov byte[si+1], 0 ; reserved 0
     mov word[si+2], 5 ; number of sector to load
-    mov word[si+4], 0x7E00 ; Offset
-    mov word[si+6], 0 ; Segment => 0 * 16 + 0x7e00 = 0x7e00
+    mov word[si+4], 0x200 ; Offset (512 bytes after ORG)
+    mov word[si+6], 0x7c0 ; Segment => 0x7C0 * 16 + 0x200 = 0x7e00
     mov dword[si+8], 1 ; Starting sector LBA
     mov dword[si+0xC], 0 ; Starting sector HBA
     mov dl, [DriveId]
@@ -35,7 +46,7 @@ LoadLoader:
     int 0x13
     jc ReadError
     mov [DriveId], dl
-    jmp 0x7E00
+    jmp 0x200
 
 NotSupported:
 ReadError:
